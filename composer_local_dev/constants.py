@@ -13,9 +13,6 @@
 # limitations under the License.
 import enum
 
-# TZ exclusions list for mounting DAGs
-DAGS_DIR_EXCLUDE_FROM_MOUNT = [ "tz" ]
-
 # The name of environment variable with custom configuration path
 CLOUD_CLI_CONFIG_PATH_ENV = "CLOUDSDK_CONFIG"
 

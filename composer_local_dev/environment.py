@@ -46,6 +46,7 @@ def timeout_occurred(start_time):
 def get_image_mounts(
     env_path: pathlib.Path,
     dags_path: str,
+    dags_subpath_exclude: Optional[str],
     gcloud_config_path: str,
     requirements: pathlib.Path,
 ) -> List[docker.types.Mount]:
@@ -75,13 +76,20 @@ def get_image_mounts(
 
     dags_mount_path = f"{constants.AIRFLOW_HOME}/gcs/dags/"
 
-    for item in pathlib.Path(dags_path).iterdir():
-        if item.name not in constants.DAGS_DIR_EXCLUDE_FROM_MOUNT:
-            mounts.append(docker.types.Mount(
-                source=str(item.resolve()),
-                target=f"{dags_mount_path}/{item.name}",
-                type="bind",
-            ))
+    if not dags_subpath_exclude:
+        mounts.append(docker.types.Mount(
+            source=dags_path,
+            target=dags_mount_path,
+            type="bind",
+        ))
+    else:
+        for item in pathlib.Path(dags_path).iterdir():
+            if (item_str := str(item.resolve())) not in dags_subpath_exclude:
+                mounts.append(docker.types.Mount(
+                    source=item_str,
+                    target=f"{dags_mount_path}/{item.name}",
+                    type="bind",
+                ))
     return mounts
 
 
@@ -365,6 +373,7 @@ class EnvironmentConfig:
         self.image_version = self.get_str_param("composer_image_version")
         self.location = self.get_str_param("composer_location")
         self.dags_path = self.get_str_param("dags_path")
+        self.dags_subpath_exclude = self.get_str_param("dags_subpath_exclude")
         self.dag_dir_list_interval = self.parse_int_param(
             "dag_dir_list_interval", allowed_range=(0,)
         )
@@ -447,6 +456,7 @@ class Environment:
         image_version: str,
         location: str,
         dags_path: Optional[str],
+        dags_subpath_exclude: Optional[str],
         dag_dir_list_interval: int = 10,
         port: Optional[int] = None,
         pypi_packages: Optional[Dict] = None,
@@ -463,6 +473,7 @@ class Environment:
         self.image_tag = get_docker_image_tag_from_image_version(image_version)
         self.location = location
         self.dags_path = files.resolve_dags_path(dags_path, env_dir_path)
+        self.dags_subpath_exclude = str(pathlib.Path(dags_subpath_exclude).resolve()) if dags_subpath_exclude else None
         self.dag_dir_list_interval = dag_dir_list_interval
         self.port: int = port if port is not None else 8080
         self.pypi_packages = (
@@ -514,6 +525,7 @@ class Environment:
             image_version=config.image_version,
             location=config.location,
             dags_path=config.dags_path,
+            dags_subpath_exclude=config.dags_subpath_exclude,
             dag_dir_list_interval=config.dag_dir_list_interval,
             port=config.port,
             environment_vars=environment_vars,
@@ -528,6 +540,7 @@ class Environment:
         env_dir_path: pathlib.Path,
         web_server_port: Optional[int],
         dags_path: Optional[str],
+        dags_subpath_exclude: Optional[str],
     ):
         """
         Create Environment using configuration retrieved from Composer
@@ -549,6 +562,7 @@ class Environment:
             image_version=software_config.image_version,
             location=location,
             dags_path=dags_path,
+            dags_subpath_exclude=dags_subpath_exclude,
             dag_dir_list_interval=10,
             port=web_server_port,
             pypi_packages=pypi_packages,
@@ -588,6 +602,7 @@ class Environment:
             "composer_location": self.location,
             "composer_project_id": self.project_id,
             "dags_path": self.dags_path,
+            "dags_subpath_exclude": self.dags_subpath_exclude,
             "dag_dir_list_interval": int(self.dag_dir_list_interval),
             "port": int(self.port),
         }
@@ -603,6 +618,7 @@ class Environment:
         mounts = get_image_mounts(
             self.env_dir_path,
             self.dags_path,
+            self.dags_subpath_exclude,
             utils.resolve_gcloud_config_path(),
             self.requirements_file,
         )
