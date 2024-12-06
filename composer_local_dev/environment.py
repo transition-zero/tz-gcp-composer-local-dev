@@ -59,13 +59,12 @@ def get_image_mounts(
     """
     mount_paths = {
         requirements: "composer_requirements.txt",
-        dags_path: "gcs/dags/",
         env_path / "plugins": "gcs/plugins/",
         env_path / "data": "gcs/data/",
         gcloud_config_path: ".config/gcloud",
         env_path / "airflow.db": "airflow/airflow.db",
     }
-    return [
+    mounts = [
         docker.types.Mount(
             source=str(source),
             target=f"{constants.AIRFLOW_HOME}/{target}",
@@ -73,6 +72,17 @@ def get_image_mounts(
         )
         for source, target in mount_paths.items()
     ]
+
+    dags_mount_path = f"{constants.AIRFLOW_HOME}/gcs/dags/"
+
+    for item in pathlib.Path(dags_path).iterdir():
+        if item.name not in constants.DAGS_DIR_EXCLUDE_FROM_MOUNT:
+            mounts.append(docker.types.Mount(
+                source=str(item.resolve()),
+                target=f"{dags_mount_path}/{item.name}",
+                type="bind",
+            ))
+    return mounts
 
 
 def get_default_environment_variables(
