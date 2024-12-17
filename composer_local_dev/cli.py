@@ -47,7 +47,7 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Environment options",
-            "options": ["--web-server-port", "--dags-path"],
+            "options": ["--web-server-port", "--dags-path", "--dags-subpath-exclude"],
         },
     ],
     "composer-dev start": [COMMON_OPTIONS],
@@ -225,6 +225,13 @@ option_location = click.option(
     metavar="PATH",
     type=click.Path(file_okay=False),
 )
+@click.option(
+    "--dags-subpath-exclude",
+    help="A file or folder that should be excluded from mounting to the dags directory.",
+    show_default="none",
+    metavar="PATH",
+    type=click.Path(file_okay=False),
+)
 @required_environment
 @verbose_mode
 @debug_mode
@@ -239,6 +246,7 @@ def create(
     verbose: bool,
     debug: bool,
     dags_path: Optional[pathlib.Path] = None,
+    dags_subpath_exclude: Optional[str] = None,
 ):
     """
     Create local Composer development environment.
@@ -292,6 +300,7 @@ def create(
             env_dir_path=env_dir,
             web_server_port=web_server_port,
             dags_path=dags_path,
+            dags_subpath_exclude=dags_subpath_exclude,
         )
     else:
         env = composer_environment.Environment(
@@ -301,6 +310,7 @@ def create(
             env_dir_path=env_dir,
             port=web_server_port,
             dags_path=dags_path,
+            dags_subpath_exclude=dags_subpath_exclude,
         )
     env.create()
 
