@@ -77,19 +77,23 @@ def get_image_mounts(
     dags_mount_path = f"{constants.AIRFLOW_HOME}/gcs/dags/"
 
     if not dags_subpath_exclude:
-        mounts.append(docker.types.Mount(
-            source=dags_path,
-            target=dags_mount_path,
-            type="bind",
-        ))
+        mounts.append(
+            docker.types.Mount(
+                source=dags_path,
+                target=dags_mount_path,
+                type="bind",
+            )
+        )
     else:
         for item in pathlib.Path(dags_path).iterdir():
             if (item_str := str(item.resolve())) not in dags_subpath_exclude:
-                mounts.append(docker.types.Mount(
-                    source=item_str,
-                    target=f"{dags_mount_path}/{item.name}",
-                    type="bind",
-                ))
+                mounts.append(
+                    docker.types.Mount(
+                        source=item_str,
+                        target=f"{dags_mount_path}/{item.name}",
+                        type="bind",
+                    )
+                )
     return mounts
 
 
@@ -473,7 +477,11 @@ class Environment:
         self.image_tag = get_docker_image_tag_from_image_version(image_version)
         self.location = location
         self.dags_path = files.resolve_dags_path(dags_path, env_dir_path)
-        self.dags_subpath_exclude = str(pathlib.Path(dags_subpath_exclude).resolve()) if dags_subpath_exclude else None
+        self.dags_subpath_exclude = (
+            str(pathlib.Path(dags_subpath_exclude).resolve())
+            if dags_subpath_exclude
+            else None
+        )
         self.dag_dir_list_interval = dag_dir_list_interval
         self.port: int = port if port is not None else 8080
         self.pypi_packages = (

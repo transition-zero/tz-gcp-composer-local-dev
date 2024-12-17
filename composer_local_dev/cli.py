@@ -47,7 +47,11 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Environment options",
-            "options": ["--web-server-port", "--dags-path", "--dags-subpath-exclude"],
+            "options": [
+                "--web-server-port",
+                "--dags-path",
+                "--dags-subpath-exclude",
+            ],
         },
     ],
     "composer-dev start": [COMMON_OPTIONS],
