@@ -59,16 +59,17 @@ repos:
         The word(s) should be in lowercase." && exec codespell "$@"' --
       language: python
       types: [text]
-  - repo: local
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.43.0
     hooks:
       - id: markdownlint
         name: Run markdownlint to check the style of Markdown files
         description: Checks the style of Markdown files.
-        entry: markdownlint
+        entry: markdownlint 
+        args: [--disable=MD013]
         language: node
         types: [markdown]
         files: \.(md|mdown|markdown)$
-        additional_dependencies: ['markdownlint-cli']
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
