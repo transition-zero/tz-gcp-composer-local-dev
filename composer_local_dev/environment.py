@@ -601,8 +601,13 @@ class Environment:
         )
         env_vars = {**default_vars, **self.environment_vars}
 
-        if platform.system() == "Windows" and env_vars["COMPOSER_CONTAINER_RUN_AS_HOST_USER"] == "True":
-          raise Exception("COMPOSER_CONTAINER_RUN_AS_HOST_USER must be set to `False` on Windows")
+        if (
+            platform.system() == "Windows"
+            and env_vars["COMPOSER_CONTAINER_RUN_AS_HOST_USER"] == "True"
+        ):
+            raise Exception(
+                "COMPOSER_CONTAINER_RUN_AS_HOST_USER must be set to `False` on Windows"
+            )
 
         ports = {
             f"8080/tcp": self.port,
