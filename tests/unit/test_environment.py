@@ -957,9 +957,6 @@ def test_get_image_mounts(mocked_mount):
             type="bind",
         ),
         mock.call(
-            source=dags_path, target="/home/airflow/gcs/dags/", type="bind"
-        ),
-        mock.call(
             source=str(path / "plugins"),
             target="/home/airflow/gcs/plugins/",
             type="bind",
@@ -978,6 +975,9 @@ def test_get_image_mounts(mocked_mount):
             source=str(airflow_db_path),
             target="/home/airflow/airflow/airflow.db",
             type="bind",
+        ),
+        mock.call(
+            source=dags_path, target="/home/airflow/gcs/dags/", type="bind"
         ),
     ]
     actual_mounts = environment.get_image_mounts(
@@ -1102,6 +1102,7 @@ class TestEnvironmentConfig:
             "composer_location": "us-central1",
             "composer_project_id": "project",
             "dags_path": "/dags/",
+            "dags_subpath_exclude": "/dags/exclude/",
             "dag_dir_list_interval": 10,
             "port": 8080,
         }
@@ -1132,6 +1133,7 @@ class TestEnvironmentConfig:
             "composer_location": "us-central1",
             "composer_project_id": "project",
             "dags_path": "/dags/",
+            "dags_subpath_exclude": "/dags/exclude/",
             "dag_dir_list_interval": 10,
             "port": 8080,
         }

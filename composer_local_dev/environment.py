@@ -46,9 +46,9 @@ def timeout_occurred(start_time):
 def get_image_mounts(
     env_path: pathlib.Path,
     dags_path: str,
-    dags_subpath_exclude: Optional[str],
     gcloud_config_path: str,
     requirements: pathlib.Path,
+    dags_subpath_exclude: Optional[str] = None,
 ) -> List[docker.types.Mount]:
     """
     Return list of docker volumes to be mounted inside container.
@@ -460,7 +460,7 @@ class Environment:
         image_version: str,
         location: str,
         dags_path: Optional[str],
-        dags_subpath_exclude: Optional[str],
+        dags_subpath_exclude: Optional[str] = None,
         dag_dir_list_interval: int = 10,
         port: Optional[int] = None,
         pypi_packages: Optional[Dict] = None,
@@ -548,7 +548,7 @@ class Environment:
         env_dir_path: pathlib.Path,
         web_server_port: Optional[int],
         dags_path: Optional[str],
-        dags_subpath_exclude: Optional[str],
+        dags_subpath_exclude: Optional[str] = None,
     ):
         """
         Create Environment using configuration retrieved from Composer
@@ -570,7 +570,7 @@ class Environment:
             image_version=software_config.image_version,
             location=location,
             dags_path=dags_path,
-            dags_subpath_exclude=dags_subpath_exclude,
+            dags_subpath_exclude=dags_subpath_exclude or None,
             dag_dir_list_interval=10,
             port=web_server_port,
             pypi_packages=pypi_packages,
@@ -624,11 +624,11 @@ class Environment:
         """
         LOG.debug("Creating container")
         mounts = get_image_mounts(
-            self.env_dir_path,
-            self.dags_path,
-            self.dags_subpath_exclude,
-            utils.resolve_gcloud_config_path(),
-            self.requirements_file,
+            env_path=self.env_dir_path,
+            dags_path=self.dags_path,
+            gcloud_config_path=utils.resolve_gcloud_config_path(),
+            requirements=self.requirements_file,
+            dags_subpath_exclude=self.dags_subpath_exclude,
         )
         default_vars = get_default_environment_variables(
             self.dag_dir_list_interval, self.project_id
