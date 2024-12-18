@@ -1,0 +1,63 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: ci-test
+
+on:
+  pull_request:
+    branches: [ "main", "development" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.11"
+      - name: Install pre-commit
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pre-commit
+      - name: Lint with precommit
+        run: |
+          pre-commit run --all-files
+
+  test:
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    environment: ci-test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.SERVICE_ACCOUNT_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: latest
+      - name: Set up Python for nox testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+            3.11
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[tests]
+      - name: Test
+        run: |
+          nox

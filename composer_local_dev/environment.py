@@ -46,9 +46,9 @@ def timeout_occurred(start_time):
 def get_image_mounts(
     env_path: pathlib.Path,
     dags_path: str,
-    dags_subpath_exclude: Optional[str],
     gcloud_config_path: str,
     requirements: pathlib.Path,
+    dags_subpath_exclude: Optional[str] = None,
 ) -> List[docker.types.Mount]:
     """
     Return list of docker volumes to be mounted inside container.
@@ -77,19 +77,23 @@ def get_image_mounts(
     dags_mount_path = f"{constants.AIRFLOW_HOME}/gcs/dags/"
 
     if not dags_subpath_exclude:
-        mounts.append(docker.types.Mount(
-            source=dags_path,
-            target=dags_mount_path,
-            type="bind",
-        ))
+        mounts.append(
+            docker.types.Mount(
+                source=dags_path,
+                target=dags_mount_path,
+                type="bind",
+            )
+        )
     else:
         for item in pathlib.Path(dags_path).iterdir():
             if (item_str := str(item.resolve())) not in dags_subpath_exclude:
-                mounts.append(docker.types.Mount(
-                    source=item_str,
-                    target=f"{dags_mount_path}/{item.name}",
-                    type="bind",
-                ))
+                mounts.append(
+                    docker.types.Mount(
+                        source=item_str,
+                        target=f"{dags_mount_path}/{item.name}",
+                        type="bind",
+                    )
+                )
     return mounts
 
 
@@ -456,7 +460,7 @@ class Environment:
         image_version: str,
         location: str,
         dags_path: Optional[str],
-        dags_subpath_exclude: Optional[str],
+        dags_subpath_exclude: Optional[str] = None,
         dag_dir_list_interval: int = 10,
         port: Optional[int] = None,
         pypi_packages: Optional[Dict] = None,
@@ -473,7 +477,11 @@ class Environment:
         self.image_tag = get_docker_image_tag_from_image_version(image_version)
         self.location = location
         self.dags_path = files.resolve_dags_path(dags_path, env_dir_path)
-        self.dags_subpath_exclude = str(pathlib.Path(dags_subpath_exclude).resolve()) if dags_subpath_exclude else None
+        self.dags_subpath_exclude = (
+            str(pathlib.Path(dags_subpath_exclude).resolve())
+            if dags_subpath_exclude
+            else None
+        )
         self.dag_dir_list_interval = dag_dir_list_interval
         self.port: int = port if port is not None else 8080
         self.pypi_packages = (
@@ -540,7 +548,7 @@ class Environment:
         env_dir_path: pathlib.Path,
         web_server_port: Optional[int],
         dags_path: Optional[str],
-        dags_subpath_exclude: Optional[str],
+        dags_subpath_exclude: Optional[str] = None,
     ):
         """
         Create Environment using configuration retrieved from Composer
@@ -562,7 +570,7 @@ class Environment:
             image_version=software_config.image_version,
             location=location,
             dags_path=dags_path,
-            dags_subpath_exclude=dags_subpath_exclude,
+            dags_subpath_exclude=dags_subpath_exclude or None,
             dag_dir_list_interval=10,
             port=web_server_port,
             pypi_packages=pypi_packages,
@@ -616,19 +624,24 @@ class Environment:
         """
         LOG.debug("Creating container")
         mounts = get_image_mounts(
-            self.env_dir_path,
-            self.dags_path,
-            self.dags_subpath_exclude,
-            utils.resolve_gcloud_config_path(),
-            self.requirements_file,
+            env_path=self.env_dir_path,
+            dags_path=self.dags_path,
+            gcloud_config_path=utils.resolve_gcloud_config_path(),
+            requirements=self.requirements_file,
+            dags_subpath_exclude=self.dags_subpath_exclude,
         )
         default_vars = get_default_environment_variables(
             self.dag_dir_list_interval, self.project_id
         )
         env_vars = {**default_vars, **self.environment_vars}
 
-        if platform.system() == "Windows" and env_vars["COMPOSER_CONTAINER_RUN_AS_HOST_USER"] == "True":
-          raise Exception("COMPOSER_CONTAINER_RUN_AS_HOST_USER must be set to `False` on Windows")
+        if (
+            platform.system() == "Windows"
+            and env_vars["COMPOSER_CONTAINER_RUN_AS_HOST_USER"] == "True"
+        ):
+            raise Exception(
+                "COMPOSER_CONTAINER_RUN_AS_HOST_USER must be set to `False` on Windows"
+            )
 
         ports = {
             f"8080/tcp": self.port,
