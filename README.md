@@ -8,7 +8,7 @@ Composer Local Development CLI tool streamlines Apache Airflow DAG development
 for Cloud Composer 2 by running an Airflow environment locally. This local
 Airflow environment uses an image of a specific Cloud Composer version.
 
-You can create a local Airflow environments based on an existing Cloud Composer
+You can create a local Airflow environment based on an existing Cloud Composer
 environment. In this case, the local Airflow environment takes the list of
 installed PyPI packages and environment variable names from your Cloud Composer
 environment.
