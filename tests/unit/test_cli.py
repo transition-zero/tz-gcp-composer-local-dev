@@ -14,6 +14,7 @@
 import contextlib
 import os
 import pathlib
+import re
 from typing import Optional
 from unittest import mock
 
@@ -51,7 +52,12 @@ def run_composer_and_assert_exit_code(
     return result
 
 
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
+
+
 def reformat_cli_output(output):
+    # rich_click emits colour codes when colour is forced (e.g. in CI)
+    output = ANSI_ESCAPE.sub("", output)
     reformatted = output.replace("│", "").replace("\n", "")
     reformatted = " ".join(reformatted.split())  # repeated spaces
     return reformatted
@@ -208,7 +214,7 @@ class TestStartRestartCommand:
             "Invalid value for '--web-server-port' / '--port': "
             "-1 is not in the range"
         )
-        assert exp_error in result.output
+        assert exp_error in reformat_cli_output(result.output)
 
     @pytest.mark.parametrize("command", ["start", "restart"])
     def test_start_command_with_env(
