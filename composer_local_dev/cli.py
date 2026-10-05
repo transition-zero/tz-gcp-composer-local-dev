@@ -536,9 +536,10 @@ def remove(
 
 # ignore_unknown_options is required to be able to pass options to airflow cmd
 @cli.command(
+    name="run-airflow-cmd",
     context_settings=dict(
         ignore_unknown_options=True,
-    )
+    ),
 )
 @required_environment
 @verbose_mode

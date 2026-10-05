@@ -28,7 +28,7 @@ dependencies = [
     "google-auth>=2.27.0",
     "google-cloud-orchestration-airflow>=1.2.0",
     "google-cloud-artifact-registry>=1.2.0",
-    "rich_click==1.4.0",
+    "rich_click>=1.8",
     "docker==7.*",
 ]
 extras = {
